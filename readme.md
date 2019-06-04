@@ -4,16 +4,27 @@
 
 This is a clone of [`ion-item-sliding`](https://ionicframework.com/docs/api/item-sliding) from [Ionic Framwork](https://ionicframework.com), with the sliding action being triggered by click instead of drag events. 
 
-The component is built with Stencil, the same underlying framework used by components in Ionic Framwork. Which means wherever Stencil is supported, this component should also be compatible.
+The component is built with Stencil, the same underlying framework used by components in Ionic Framwork (v4). Which means wherever Stencil is supported, this component should also be compatible.
 
 The usage for this component remains largely the same as `ion-item-sliding`; you can put `ion-item-options` under this element, specifying `start` or `end` in `side` attribute. Since there is no direction in a click event, **this component only supports one `ion-item-options` opening from one side**; the **first `ion-item-options` always wins**, with all remaining ones ignored.
 
-# Project Status
+## Project Status
 
-This project is still in a proof-of-concept stage. Code cleanup and detailed testings aside, the component is pretty usable as-is. It has also been deployed and actively used in a production environment at my previous workplace. 
+This project is still in a proof-of-concept stage. However, code cleanup and detailed testings aside, the component is stable enough and pretty usable as-is. It has also been deployed and actively used in a production environment at my previous workplace. 
 
 If you find a bug, you are welcome to open a pull request. However, I would like to keep the scope of this project small. Feature request will be considered, but may not always be accepted.
 
-# Using this component
+## Using this component
 
-WIP
+Currently this project has not been publish to npm yet, so you need to follow Stencil doc for building and incuding the component in a project. 
+
+For example, if you are using Anuglar, you can follow <https://stenciljs.com/docs/angular>. 
+
+Detailed API doc is still WIP.
+
+## TODO
+
+ - should I render the ignored ion-item-options?
+ - code cleaning: refactor current logic as currently it is just calling all original drag handelers on click
+ - unit test?
+ - doc
