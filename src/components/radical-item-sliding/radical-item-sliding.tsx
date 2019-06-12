@@ -102,6 +102,12 @@ export class RadicalItemSliding {
   @Listen('click')
   async handleClick(event: MouseEvent) {
     console.debug('I am clicked!', this.disabled, event);
+
+    // button is disabled, do nothing
+    if (this.disabled) {
+      return;
+    }
+
     this.opening = this.closed;
     const later = (timeout?: number, ...args: any[]) => new Promise(resolve => window.setTimeout(resolve, timeout, ...args));
     //if (this.disabled) return;
