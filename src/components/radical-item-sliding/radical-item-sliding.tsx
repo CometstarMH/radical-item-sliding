@@ -1,4 +1,6 @@
 import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen } from '@stencil/core';
+import { Subject } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 type Mode = 'ios' | 'md';
 
@@ -22,7 +24,20 @@ const enum SlidingState {
   SwipeStart = 1 << 6,
 }
 
-let openSlidingItem: any/*HTMLIonItemSlidingElement*/ | undefined;
+const later = (timeout?: number, ...args: any[]) => new Promise(resolve => window.setTimeout(resolve, timeout, ...args));
+
+/**
+ * Wait for exactly 1 frame to complete redering, by requestAnimationFrame + Promise(microtask) instead of double requestAnimationFrame.
+ * Returns a Promise which can be used for async/await.
+ */
+function waitForRender() {
+  // let intermediate = function () {window.requestAnimationFrame(fn)};
+  // window.requestAnimationFrame(intermediate);
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => Promise.resolve().then(() => resolve()));
+  });
+  
+}
 
 function swipeShouldReset(isResetDirection: boolean, isMovingFast: boolean, isOnResetZone: boolean): boolean {
   // The logic required to know when the sliding item should close (openAmount=0)
@@ -61,7 +76,7 @@ function swipeShouldReset(isResetDirection: boolean, isMovingFast: boolean, isOn
 export class RadicalItemSliding {
   mode!: Mode;
 
-  private item: any/*HTMLIonItemElement*/ | null = null;
+  private itemEl: any/*HTMLIonItemElement*/ | null = null;
   private openAmount = 0;
   private initialOpenAmount = 0;
   private optsWidthRightSide = 0;
@@ -73,7 +88,8 @@ export class RadicalItemSliding {
   private optsDirty = true;
 
   private closed = true;
-  private opening = false;
+
+  private click$ = new Subject<void>();
 
   @Element() el!: any/*HTMLIonItemSlidingElement*/;
 
@@ -99,8 +115,95 @@ export class RadicalItemSliding {
    */
   @Event() ionDrag!: EventEmitter;
 
+  constructor() {
+    //this.click$.pipe(switchMap(_ => )).subscribe();
+  }
+
   @Listen('click')
   async handleClick(event: MouseEvent) {
+    //this.click$.next();
+    await this.handler();
+  }
+
+  private async handler() {
+    // button is disabled, do nothing
+    if (this.disabled) {
+      return;
+    }
+
+    let opening = this.closed;
+    if (opening) { await this.closeOpened(); }
+
+    this.optsDirty = true;
+    this.state = SlidingState.Enabled;
+
+    this.initialOpenAmount = this.openAmount;
+    if (this.itemEl) {
+      this.itemEl.style.transition = 'none';
+      await waitForRender(); //wait for render
+    }
+    
+    // 
+    if (this.optsDirty) {
+      this.calculateOptsWidth();
+    }
+    let newOpenAmount = this.initialOpenAmount - (opening ? -2 : 2);
+
+    switch (this.sides) {
+      case ItemSide.End: newOpenAmount = Math.max(0, newOpenAmount); break;
+      case ItemSide.Start: newOpenAmount = Math.min(0, newOpenAmount); break;
+      case ItemSide.Both: break;
+      case ItemSide.None: return;
+      default: console.warn('invalid ItemSideFlags value', this.sides); break;
+    }
+
+    let optsWidth;
+    if (newOpenAmount > this.optsWidthRightSide) {
+      optsWidth = this.optsWidthRightSide;
+      newOpenAmount = optsWidth + (newOpenAmount - optsWidth) * ELASTIC_FACTOR;
+
+    } else if (newOpenAmount < -this.optsWidthLeftSide) {
+      optsWidth = -this.optsWidthLeftSide;
+      newOpenAmount = optsWidth + (newOpenAmount - optsWidth) * ELASTIC_FACTOR;
+    }
+
+    await this.setOpenAmount(newOpenAmount, false);
+
+    //
+    //TODO: implement different sides
+    const velocity = opening ? -2 : 2;
+
+    let restingPoint = (this.openAmount > 0) ? this.optsWidthRightSide : -this.optsWidthLeftSide;
+
+    // Check if the drag didn't clear the buttons mid-point
+    // and we aren't moving fast enough to swipe open
+    const isResetDirection = (this.openAmount > 0) === !(velocity < 0);
+    const isMovingFast = Math.abs(velocity) > 0.3;
+    const isOnCloseZone = Math.abs(this.openAmount) < Math.abs(restingPoint / 2);
+
+    if (false && swipeShouldReset(isResetDirection, isMovingFast, isOnCloseZone)) {
+      restingPoint = 0;
+    }
+
+    if (!opening) {
+      restingPoint = 0;
+    }
+
+    const state = this.state;
+
+    await this.setOpenAmount(restingPoint, true);
+
+    if ((state & SlidingState.SwipeEnd) !== 0 && this.rightOptions) {
+      this.rightOptions.fireSwipeEvent();
+    } else if ((state & SlidingState.SwipeStart) !== 0 && this.leftOptions) {
+      this.leftOptions.fireSwipeEvent();
+    }
+
+  }
+
+  private async asdasd() {
+    let opening = false;
+
     console.debug('I am clicked!', this.disabled, event);
 
     // button is disabled, do nothing
@@ -108,16 +211,14 @@ export class RadicalItemSliding {
       return;
     }
 
-    this.opening = this.closed;
-    const later = (timeout?: number, ...args: any[]) => new Promise(resolve => window.setTimeout(resolve, timeout, ...args));
-    //if (this.disabled) return;
+    opening = this.closed;
 
     // start
     await later();
     {
       console.debug('started');
-      openSlidingItem = this.el;
-      if (this.opening) { await this.closeOpened(); }
+      
+      if (opening) { await this.closeOpened(); }
       if (this.tmr !== undefined) {
         console.debug('clear timer');
         clearTimeout(this.tmr);
@@ -129,8 +230,8 @@ export class RadicalItemSliding {
         this.state = SlidingState.Enabled;
       }
       this.initialOpenAmount = this.openAmount;
-      if (this.item) {
-        this.item.style.transition = 'none';
+      if (this.itemEl) {
+        this.itemEl.style.transition = 'none';
       }
     }
 
@@ -143,7 +244,7 @@ export class RadicalItemSliding {
       }
 
       //let openAmount = this.initialOpenAmount - gesture.deltaX;
-      let newOpenAmount = this.initialOpenAmount - (this.opening ? -2 : 2)
+      let newOpenAmount = this.initialOpenAmount - (opening ? -2 : 2)
       console.debug('newOpenAmount', newOpenAmount);
       console.debug('sides', this.sides);
 
@@ -173,7 +274,7 @@ export class RadicalItemSliding {
     {
       console.debug('ending');
       /*const velocity = -gesture.velocityX*/;
-      const velocity = this.opening ? -2 : 2;
+      const velocity = opening ? -2 : 2;
       console.debug('velocity', velocity);
 
       let restingPoint = (this.openAmount > 0)
@@ -191,7 +292,7 @@ export class RadicalItemSliding {
         restingPoint = 0;
       }
 
-      if (!this.opening) {
+      if (!opening) {
         restingPoint = 0;
       }
 
@@ -208,39 +309,16 @@ export class RadicalItemSliding {
 
   async componentDidLoad() {
     console.debug('componentDidLoad', this.el);
-    this.item = this.el.querySelector('ion-item');
-    console.debug(this.item);
+    this.itemEl = this.el.querySelector('ion-item');
+    console.debug(this.itemEl);
     await this.updateOptions();
-    /*
-    this.gesture = (await import('../../utils/gesture')).createGesture({
-      el: this.el,
-      queue: this.queue,
-      gestureName: 'item-swipe',
-      gesturePriority: 100,
-      threshold: 5,
-      canStart: () => this.canStart(),
-      onStart: () => this.onStart(),
-      onMove: ev => this.onMove(ev),
-      onEnd: ev => this.onEnd(ev),
-    });
-    */
 
     this.disabledChanged();
   }
 
   componentDidUnload() {
-    /*
-    if (this.gesture) {
-      this.gesture.destroy();
-      this.gesture = undefined;
-    }
-    */
-    this.item = null;
+    this.itemEl = null;
     this.leftOptions = this.rightOptions = undefined;
-
-    if (openSlidingItem === this.el) {
-      openSlidingItem = undefined;
-    }
   }
 
   /**
@@ -318,6 +396,9 @@ export class RadicalItemSliding {
     this.sides = sides;
   }
 
+  /**
+   * recalculate optsWidthRightSide or optsWidthLeftSide, then set optsDirty to false
+   */
   private calculateOptsWidth() {
     console.debug('calculateOptsWidth');
     this.optsWidthRightSide = 0;
@@ -336,17 +417,18 @@ export class RadicalItemSliding {
 
   private setOpenAmount(openAmount: number, isFinal: boolean) {
     console.debug('setOpenAmount', openAmount, isFinal);
+
     this.closed = openAmount == 0;
     if (this.tmr !== undefined) {
       console.debug('clearTimeout');
       clearTimeout(this.tmr);
       this.tmr = undefined;
     }
-    console.debug(this.item);
-    if (!this.item) {
-      return;
+    console.debug(this.itemEl);
+    if (!this.itemEl) {
+      return Promise.resolve();
     }
-    const style = this.item.style;
+    const style = this.itemEl.style;
     this.openAmount = openAmount;
 
     if (isFinal) {
@@ -370,9 +452,8 @@ export class RadicalItemSliding {
         this.tmr = undefined;
       }, 600) as any;
 
-      openSlidingItem = undefined;
       style.transform = '';
-      return;
+      return waitForRender();
     }
 
     console.debug('set transform');
@@ -381,6 +462,7 @@ export class RadicalItemSliding {
       amount: openAmount,
       ratio: this.getSlidingRatioSync()
     });
+    return waitForRender();
   }
 
   private getSlidingRatioSync(): number {
