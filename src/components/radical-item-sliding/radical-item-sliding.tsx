@@ -27,14 +27,18 @@ const enum SlidingState {
 const later = (timeout?: number, ...args: any[]) => new Promise(resolve => window.setTimeout(resolve, timeout, ...args));
 
 /**
- * Wait for exactly 1 frame to complete redering, by requestAnimationFrame + Promise(microtask) instead of double requestAnimationFrame.
- * Returns a Promise which can be used for async/await.
+ * Wait for exactly 1 frame to complete redering, using requestAnimationFrame + Promise instead of double requestAnimationFrame.
+ * The fulfilled handler (via .then(handler)) is added as microtask, or PromiseJobs, as defined in ECMAScript 2015.
+ * As the microtask is added when animation frame callbacks are run, the microtask will be run in the next tick, and before another rendering.
+ * Therefore, any code that needs to wait for rendering should be put inside the handler.
+ * Or, more conveniently, use async/await.
  */
 function waitForRender() {
   // let intermediate = function () {window.requestAnimationFrame(fn)};
   // window.requestAnimationFrame(intermediate);
   return new Promise((resolve) => {
-    window.requestAnimationFrame(() => Promise.resolve().then(() => resolve()));
+    // window.requestAnimationFrame(() => Promise.resolve().then(() => resolve()));
+    window.requestAnimationFrame(resolve);
   });
   
 }
