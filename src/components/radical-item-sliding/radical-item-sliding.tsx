@@ -48,10 +48,6 @@ function waitForRender() {
  * The only differences are: the sliding is activated by click event rather than drag event
  *                           only ion-item-options that are set on 'end' side are shown
  *                           use different mechanism to close all other sliding items, including any original ionic-item-sliding
- * The project folder, radical-item-sliding, actually contains a standalone project.
- * After any modification to this component, the whole project must be rebuilt using Stencil
- * Check Stencil documentation on how to build and use in Angular
- * Others that wish to include this component must import from the dist folder, which is the default Stencil build output path
  *
  * TODO: Stencil component does not want to work with Angular AOT
  */
@@ -63,14 +59,17 @@ export class RadicalItemSliding {
   mode!: Mode;
 
   private itemEl: any/*HTMLIonItemElement*/ | null = null;
+  private leftOptions?: any/*HTMLIonItemOptionsElement*/;
+  private rightOptions?: any/*HTMLIonItemOptionsElement*/;
+  private sides = ItemSide.None;
+  /**
+   * positive => open right (end) side, negative = > open left (start) side
+   */
   private openAmount = 0;
   private initialOpenAmount = 0;
   private optsWidthRightSide = 0;
   private optsWidthLeftSide = 0;
-  private sides = ItemSide.None;
   private tmr: number | undefined;
-  private leftOptions?: any/*HTMLIonItemOptionsElement*/;
-  private rightOptions?: any/*HTMLIonItemOptionsElement*/;
   private optsDirty = true;
 
   private closed = true;
@@ -87,14 +86,6 @@ export class RadicalItemSliding {
    * If `true`, the user cannot interact with the sliding-item.
    */
   @Prop() disabled = false;
-  @Watch('disabled')
-  disabledChanged() {
-    /*
-    if (this.gesture) {
-      this.gesture.setDisabled(this.disabled);
-    }
-    */
-  }
 
   /**
    * Emitted when the sliding position changes.
@@ -113,7 +104,7 @@ export class RadicalItemSliding {
 
   private async handler() {
     // button is disabled, do nothing
-    if (this.disabled) {
+    if (this.disabled || this.sides == ItemSide.None) {
       return;
     }
 
@@ -133,45 +124,30 @@ export class RadicalItemSliding {
     if (this.optsDirty) {
       this.calculateOptsWidth();
     }
+    
     let newOpenAmount = this.initialOpenAmount - (opening ? -2 : 2);
 
     switch (this.sides) {
       case ItemSide.End: newOpenAmount = Math.max(0, newOpenAmount); break;
       case ItemSide.Start: newOpenAmount = Math.min(0, newOpenAmount); break;
       case ItemSide.Both: break;
-      case ItemSide.None: return;
       default: console.warn('invalid ItemSideFlags value', this.sides); break;
-    }
-
-    let optsWidth;
-    if (newOpenAmount > this.optsWidthRightSide) {
-      optsWidth = this.optsWidthRightSide;
-      newOpenAmount = optsWidth + (newOpenAmount - optsWidth) * ELASTIC_FACTOR;
-
-    } else if (newOpenAmount < -this.optsWidthLeftSide) {
-      optsWidth = -this.optsWidthLeftSide;
-      newOpenAmount = optsWidth + (newOpenAmount - optsWidth) * ELASTIC_FACTOR;
     }
 
     await this.setOpenAmount(newOpenAmount, false);
 
     //
-    //TODO: implement different sides
-    const velocity = opening ? -2 : 2;
-
     let restingPoint = (this.openAmount > 0) ? this.optsWidthRightSide : -this.optsWidthLeftSide;
 
     if (!opening) {
       restingPoint = 0;
     }
 
-    const state = this.state;
-
     await this.setOpenAmount(restingPoint, true);
 
-    if ((state & SlidingState.SwipeEnd) !== 0 && this.rightOptions) {
+    if ((this.state & SlidingState.SwipeEnd) !== 0 && this.rightOptions) {
       this.rightOptions.fireSwipeEvent();
-    } else if ((state & SlidingState.SwipeStart) !== 0 && this.leftOptions) {
+    } else if ((this.state & SlidingState.SwipeStart) !== 0 && this.leftOptions) {
       this.leftOptions.fireSwipeEvent();
     }
 
@@ -182,8 +158,6 @@ export class RadicalItemSliding {
     this.itemEl = this.el.querySelector('ion-item');
     console.debug(this.itemEl);
     await this.updateOptions();
-
-    this.disabledChanged();
   }
 
   componentDidUnload() {
@@ -294,8 +268,9 @@ export class RadicalItemSliding {
       clearTimeout(this.tmr);
       this.tmr = undefined;
     }
-    console.debug(this.itemEl);
+    
     if (!this.itemEl) {
+      console.error('host element missing!');
       return Promise.resolve();
     }
     const style = this.itemEl.style;
