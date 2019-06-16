@@ -1,4 +1,4 @@
-import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen } from '@stencil/core';
+import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen, Host, h } from '@stencil/core';
 import { Subject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
@@ -195,8 +195,8 @@ export class RadicalItemSliding {
    * Get the amount the item is open in pixels.
    */
   @Method()
-  getOpenAmount(): Promise<number> {
-    return Promise.resolve(this.openAmount);
+  async getOpenAmount() {
+    return this.openAmount;
   }
 
   /**
@@ -207,8 +207,8 @@ export class RadicalItemSliding {
    * the width of the options.
    */
   @Method()
-  getSlidingRatio(): Promise<number> {
-    return Promise.resolve(this.getSlidingRatioSync());
+  async getSlidingRatio(){
+    return this.getSlidingRatioSync();
   }
 
   /**
@@ -344,17 +344,22 @@ export class RadicalItemSliding {
       return 0;
     }
   }
-
-  hostData() {
-    return {
-      class: {
-        [`${this.mode}`]: true,
-        'item-sliding-active-slide': (this.state !== SlidingState.Disabled),
-        'item-sliding-active-options-end': (this.state & SlidingState.End) !== 0,
-        'item-sliding-active-options-start': (this.state & SlidingState.Start) !== 0,
-        'item-sliding-active-swipe-end': (this.state & SlidingState.SwipeEnd) !== 0,
-        'item-sliding-active-swipe-start': (this.state & SlidingState.SwipeStart) !== 0
-      }
-    };
+  
+  // replace hostData method with Host element returned from render method
+  // https://github.com/ionic-team/stencil/blob/7b7d0725618b2a17181389096ac60de08e1c766f/BREAKING_CHANGES.md
+  render() {
+    //
+    return (
+      <Host
+        class={{
+          [`${this.mode}`]: true,
+          'item-sliding-active-slide': (this.state !== SlidingState.Disabled),
+          'item-sliding-active-options-end': (this.state & SlidingState.End) !== 0,
+          'item-sliding-active-options-start': (this.state & SlidingState.Start) !== 0,
+          'item-sliding-active-swipe-end': (this.state & SlidingState.SwipeEnd) !== 0,
+          'item-sliding-active-swipe-start': (this.state & SlidingState.SwipeStart) !== 0
+        }}
+      />
+    );
   }
 }

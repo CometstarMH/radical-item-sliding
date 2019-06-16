@@ -5,7 +5,7 @@ export const config: Config = {
   namespace: 'radical-item-sliding',
   outputTargets:[
     { type: 'dist' },
-    { type: 'docs' },
+    { type: 'docs-readme' },
     {
       type: 'www',
       serviceWorker: null // disable service workers
