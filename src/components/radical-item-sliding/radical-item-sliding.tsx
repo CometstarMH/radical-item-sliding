@@ -1,6 +1,6 @@
 import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen, Host, h } from '@stencil/core';
-import { Subject } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Subject, from } from 'rxjs';
+import { exhaustMap } from 'rxjs/operators';
 
 type Mode = 'ios' | 'md';
 
@@ -93,13 +93,13 @@ export class RadicalItemSliding {
   @Event() ionDrag!: EventEmitter;
 
   constructor() {
-    //this.click$.pipe(switchMap(_ => )).subscribe();
+    this.click$.pipe(exhaustMap(_ => from(this.handler()))).subscribe();
   }
 
   @Listen('click')
   async handleClick(event: MouseEvent) {
-    //this.click$.next();
-    await this.handler();
+    this.click$.next();
+    //await this.handler();
   }
 
   private async handler() {
