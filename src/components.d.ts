@@ -5,13 +5,10 @@
  */
 
 
-import '@stencil/core';
-
-
+import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 
 
 export namespace Components {
-
   interface RadicalItemSliding {
     /**
     * Close the sliding item. Items can also be closed from the [List](../../list/List).
@@ -34,26 +31,9 @@ export namespace Components {
     */
     'getSlidingRatio': () => Promise<number>;
   }
-  interface RadicalItemSlidingAttributes extends StencilHTMLAttributes {
-    /**
-    * If `true`, the user cannot interact with the sliding-item.
-    */
-    'disabled'?: boolean;
-    /**
-    * Emitted when the sliding position changes.
-    */
-    'onIonDrag'?: (event: CustomEvent) => void;
-  }
 }
 
 declare global {
-  interface StencilElementInterfaces {
-    'RadicalItemSliding': Components.RadicalItemSliding;
-  }
-
-  interface StencilIntrinsicElements {
-    'radical-item-sliding': Components.RadicalItemSlidingAttributes;
-  }
 
 
   interface HTMLRadicalItemSlidingElement extends Components.RadicalItemSliding, HTMLStencilElement {}
@@ -61,22 +41,35 @@ declare global {
     prototype: HTMLRadicalItemSlidingElement;
     new (): HTMLRadicalItemSlidingElement;
   };
-
   interface HTMLElementTagNameMap {
-    'radical-item-sliding': HTMLRadicalItemSlidingElement
-  }
-
-  interface ElementTagNameMap {
     'radical-item-sliding': HTMLRadicalItemSlidingElement;
   }
-
-
-  export namespace JSX {
-    export interface Element {}
-    export interface IntrinsicElements extends StencilIntrinsicElements {
-      [tagName: string]: any;
-    }
-  }
-  export interface HTMLAttributes extends StencilHTMLAttributes {}
-
 }
+
+declare namespace LocalJSX {
+  interface RadicalItemSliding extends JSXBase.HTMLAttributes<HTMLRadicalItemSlidingElement> {
+    /**
+    * If `true`, the user cannot interact with the sliding-item.
+    */
+    'disabled'?: boolean;
+    /**
+    * Emitted when the sliding position changes.
+    */
+    'onIonDrag'?: (event: CustomEvent<any>) => void;
+  }
+
+  interface IntrinsicElements {
+    'radical-item-sliding': RadicalItemSliding;
+  }
+}
+
+export { LocalJSX as JSX };
+
+
+declare module "@stencil/core" {
+  export namespace JSX {
+    interface IntrinsicElements extends LocalJSX.IntrinsicElements {}
+  }
+}
+
+

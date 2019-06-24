@@ -116,7 +116,7 @@ export class RadicalItemSliding {
 
     this.initialOpenAmount = this.openAmount;
     if (this.itemEl) {
-      this.itemEl.style.transition = 'none';
+      this.itemEl.style.transition = 'none'; // inline style to override class style => disable animation
       await waitForRender(); //wait for render
     }
     
@@ -128,16 +128,16 @@ export class RadicalItemSliding {
     let newOpenAmount = this.initialOpenAmount - (opening ? -2 : 2);
 
     switch (this.sides) {
-      case ItemSide.End: newOpenAmount = Math.max(0, newOpenAmount); break;
-      case ItemSide.Start: newOpenAmount = Math.min(0, newOpenAmount); break;
+      case ItemSide.End: newOpenAmount = this.optsWidthRightSide; break;
+      case ItemSide.Start: newOpenAmount = -this.optsWidthLeftSide; break;
       case ItemSide.Both: break;
       default: console.warn('invalid ItemSideFlags value', this.sides); break;
     }
 
-    await this.setOpenAmount(newOpenAmount, false);
+    //await this.setOpenAmount(newOpenAmount, false);
 
     //
-    let restingPoint = (this.openAmount > 0) ? this.optsWidthRightSide : -this.optsWidthLeftSide;
+    let restingPoint = newOpenAmount;
 
     if (!opening) {
       restingPoint = 0;
@@ -277,7 +277,7 @@ export class RadicalItemSliding {
     this.openAmount = openAmount;
 
     if (isFinal) {
-      style.transition = '';
+      style.transition = ''; // clear inline style to allow class style => enable animation
     }
 
     if (openAmount > 0) {
