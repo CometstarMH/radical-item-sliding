@@ -1,4 +1,4 @@
-import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen, Host, h, getMode } from '@stencil/core';
+import { Component, Element, Event, EventEmitter, Method, Prop, State, Listen, Host, h } from '@stencil/core';
 import { Subject, from } from 'rxjs';
 import { exhaustMap } from 'rxjs/operators';
 
@@ -54,7 +54,7 @@ function waitForRender() {
   styleUrl: 'radical-item-sliding.scss'
 })
 export class RadicalItemSliding {
-  @Prop() mode: 'ios' | 'md' = getMode(this);
+  private mode = document.documentElement.getAttribute('mode');
 
   private itemEl: any/*HTMLIonItemElement*/ | null = null;
   private leftOptions?: any/*HTMLIonItemOptionsElement*/;
@@ -321,7 +321,6 @@ export class RadicalItemSliding {
   // replace hostData method with Host element returned from render method
   // https://github.com/ionic-team/stencil/blob/7b7d0725618b2a17181389096ac60de08e1c766f/BREAKING_CHANGES.md
   render() {
-    //
     return (
       <Host
         class={{
