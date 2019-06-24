@@ -1,5 +1,5 @@
 import { Component, Element, Event, EventEmitter, Method, Prop, State, Listen, Host, h } from '@stencil/core';
-import { Subject, from } from 'rxjs';
+import { Subject, from, fromEvent, Subscription } from 'rxjs';
 import { exhaustMap } from 'rxjs/operators';
 
 const SWIPE_MARGIN = 30;
@@ -34,7 +34,7 @@ const later = (timeout?: number, ...args: any[]) => new Promise(resolve => windo
 function waitForRender() {
   // let intermediate = function () {window.requestAnimationFrame(fn)};
   // window.requestAnimationFrame(intermediate);
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve: () => void) => {
     // window.requestAnimationFrame(() => Promise.resolve().then(() => resolve()));
     window.requestAnimationFrame(resolve);
   });
@@ -67,12 +67,11 @@ export class RadicalItemSliding {
   private initialOpenAmount = 0;
   private optsWidthRightSide = 0;
   private optsWidthLeftSide = 0;
-  private tmr: number | undefined;
   private optsDirty = true;
-
   private closed = true;
 
   private click$ = new Subject<void>();
+  private transitionendSub: Subscription;
 
   @Element() el!: any/*HTMLIonItemSlidingElement*/;
 
@@ -97,7 +96,6 @@ export class RadicalItemSliding {
   @Listen('click')
   async handleClick(event: MouseEvent) {
     this.click$.next();
-    //await this.handler();
   }
 
   private async handler() {
@@ -110,6 +108,7 @@ export class RadicalItemSliding {
     if (opening) { await this.closeOpened(); }
 
     this.optsDirty = true;
+    let originalState = this.state;
     this.state = SlidingState.Enabled;
 
     this.initialOpenAmount = this.openAmount;
@@ -139,26 +138,36 @@ export class RadicalItemSliding {
 
     if (!opening) {
       restingPoint = 0;
+      this.state = originalState; // keep state as original, state will be reset only when sliding animation ends
     }
 
     await this.setOpenAmount(restingPoint, true);
 
+    // we only have click here, so there is no 'fully swiped' (swiped further than SWIPE_MARGIN), so no ionSwipe events
+    /*
     if ((this.state & SlidingState.SwipeEnd) !== 0 && this.rightOptions) {
       this.rightOptions.fireSwipeEvent();
     } else if ((this.state & SlidingState.SwipeStart) !== 0 && this.leftOptions) {
       this.leftOptions.fireSwipeEvent();
     }
-
+    */
   }
 
   async componentDidLoad() {
     console.debug('componentDidLoad', this.el);
     this.itemEl = this.el.querySelector('ion-item');
     console.debug(this.itemEl);
+    this.transitionendSub = fromEvent(this.itemEl, 'transitionend').subscribe(() => {
+      console.debug('transitionend');
+      if (this.closed) {
+        this.state = SlidingState.Disabled;
+      }
+    });
     await this.updateOptions();
   }
 
   componentDidUnload() {
+    this.transitionendSub.unsubscribe();
     this.itemEl = null;
     this.leftOptions = this.rightOptions = undefined;
   }
@@ -188,7 +197,7 @@ export class RadicalItemSliding {
    */
   @Method()
   async close() {
-    this.setOpenAmount(0, true);
+    await this.setOpenAmount(0, true);
   }
 
   /**
@@ -257,15 +266,10 @@ export class RadicalItemSliding {
     console.debug(this.optsWidthRightSide, this.optsWidthLeftSide);
   }
 
-  private setOpenAmount(openAmount: number, isFinal: boolean) {
+  private setOpenAmount(openAmount: number, isFinal: boolean): Promise<void> {
     console.debug('setOpenAmount', openAmount, isFinal);
 
     this.closed = openAmount == 0;
-    if (this.tmr !== undefined) {
-      console.debug('clearTimeout');
-      clearTimeout(this.tmr);
-      this.tmr = undefined;
-    }
     
     if (!this.itemEl) {
       console.error('host element missing!');
@@ -279,22 +283,16 @@ export class RadicalItemSliding {
     }
 
     if (openAmount > 0) {
-      console.debug('openAmount > 0');
       this.state = (openAmount >= (this.optsWidthRightSide + SWIPE_MARGIN))
         ? SlidingState.End | SlidingState.SwipeEnd
         : SlidingState.End;
     } else if (openAmount < 0) {
-      console.debug('openAmount < 0');
       this.state = (openAmount <= (-this.optsWidthLeftSide - SWIPE_MARGIN))
         ? SlidingState.Start | SlidingState.SwipeStart
         : SlidingState.Start;
     } else {
-      console.debug('openAmount = 0');
-      this.tmr = setTimeout(() => {
-        this.state = SlidingState.Disabled;
-        this.tmr = undefined;
-      }, 600) as any;
-
+      // state is reset in transitionend event instead of using a timer
+      // state must be set after animation so host element class is updated to hide the item options only after animation 
       style.transform = '';
       return waitForRender();
     }
