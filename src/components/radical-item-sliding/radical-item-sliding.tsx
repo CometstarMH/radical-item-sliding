@@ -1,8 +1,6 @@
-import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen, Host, h } from '@stencil/core';
+import { Component, Element, Event, EventEmitter, Method, Prop, State, Watch, Listen, Host, h, getMode } from '@stencil/core';
 import { Subject, from } from 'rxjs';
 import { exhaustMap } from 'rxjs/operators';
-
-type Mode = 'ios' | 'md';
 
 const SWIPE_MARGIN = 30;
 const ELASTIC_FACTOR = 0.55;
@@ -56,7 +54,7 @@ function waitForRender() {
   styleUrl: 'radical-item-sliding.scss'
 })
 export class RadicalItemSliding {
-  mode!: Mode;
+  @Prop() mode: 'ios' | 'md' = getMode(this);
 
   private itemEl: any/*HTMLIonItemElement*/ | null = null;
   private leftOptions?: any/*HTMLIonItemOptionsElement*/;
