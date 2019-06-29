@@ -96,6 +96,14 @@ export class RadicalItemSliding {
     this.click$.next();
   }
 
+  @Listen('ionDrag', { target: 'body' })
+  handleOtherionDrag(ev: CustomEvent) {
+    // only handle ION-ITEM-SLIDING elements, other cases are taken care by closeOpened method
+    if ((ev.target as HTMLElement).tagName == 'ION-ITEM-SLIDING') {
+      if (!this.closed) this.close();
+    }
+  }
+
   private async handler() {
     // button is disabled, do nothing
     if (this.disabled || this.sides == ItemSide.None) {
@@ -194,7 +202,7 @@ export class RadicalItemSliding {
    */
   @Method()
   async close() {
-    await this.setOpenAmount(0, true);
+    if (!this.closed) await this.setOpenAmount(0, true);
   }
 
   /**
@@ -202,14 +210,6 @@ export class RadicalItemSliding {
    */
   @Method()
   async closeOpened(): Promise<boolean> {
-    /*
-    if (openSlidingItem !== undefined) {
-      openSlidingItem && openSlidingItem.close();
-      openSlidingItem = undefined;
-      return true;
-    }
-    return false;
-    */
     let ps: Promise<void>[] = [];
     document.querySelectorAll('radical-item-sliding').forEach(r=>ps.push(r.close()));
     document.querySelectorAll('ion-item-sliding').forEach((r: any)=>ps.push(r && r.close ? r.close() : Promise.resolve()));
