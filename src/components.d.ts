@@ -11,11 +11,11 @@ import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 export namespace Components {
   interface RadicalItemSliding {
     /**
-    * Close the sliding item. Items can also be closed from the [List](../../list/List).
+    * Close the sliding item. Items can also be closed from the the parent `ion-list`.
     */
     'close': () => Promise<void>;
     /**
-    * Close all of the sliding items in the list. Items can also be closed from the [List](../../list/List).
+    * Close all of the sliding items in the list. Items can also be closed from the parent `ion-list`.
     */
     'closeOpened': () => Promise<boolean>;
     /**
