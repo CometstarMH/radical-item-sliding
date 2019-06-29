@@ -6,7 +6,7 @@ This is a clone of [`ion-item-sliding`](https://ionicframework.com/docs/api/item
 
 The component is built with Stencil, the same underlying framework used by components in Ionic Framwork (v4). Which means wherever Stencil is supported, this component should also be compatible.
 
-The usage for this component remains largely the same as `ion-item-sliding`; you can put `ion-item-options` under this element, specifying `start` or `end` in `side` attribute. Since there is no direction in a click event, **this component only supports one `ion-item-options` opening from one side**; the **first `ion-item-options` always wins**, with all remaining ones ignored.
+The usage for this component remains largely the same as `ion-item-sliding`; you can put `ion-item-options` under this element, specifying `start` or `end` in `side` attribute. Since there is no direction in a click event, **this component only supports one `ion-item-options` opening from one side**; the **last `ion-item-options` always wins**, with all remaining ones ignored.
 
 ## Project Status
 
