@@ -152,9 +152,8 @@ export class RadicalItemSliding {
   }
 
   async componentDidLoad() {
-    console.debug('componentDidLoad', this.el);
+    console.debug('componentDidLoad');
     this.itemEl = this.el.querySelector('ion-item');
-    console.debug(this.itemEl);
     this.transitionendSub = fromEvent(this.itemEl, 'transitionend').subscribe(() => {
       console.debug('transitionend');
       if (this.closed) {
@@ -221,10 +220,9 @@ export class RadicalItemSliding {
   private async updateOptions() {
     console.debug('updateOptions');
     const options = this.el.querySelectorAll('ion-item-options');
-    console.debug('updateOptions', options);
 
     let sides = 0;
-    let firstSide = 0;
+    let lastSide = 0;
 
     // Reset left and right options in case they were removed
     this.leftOptions = this.rightOptions = undefined;
@@ -235,17 +233,17 @@ export class RadicalItemSliding {
       if (option.side === 'start') {
         this.leftOptions = option;
         sides |= ItemSide.Start;
-        if (!firstSide) firstSide = ItemSide.Start;
+        lastSide = ItemSide.Start;
       } else {
         this.rightOptions = option;
         sides |= ItemSide.End;
-        if (!firstSide) firstSide = ItemSide.End;
+        lastSide = ItemSide.End;
       }
     }
 
-    console.debug(this.rightOptions);
+    console.debug(`opens to ${lastSide == ItemSide.Start ? 'start' : 'end'} side`);
     this.optsDirty = true;
-    this.sides = firstSide;
+    this.sides = lastSide;
   }
 
   /**
@@ -263,8 +261,6 @@ export class RadicalItemSliding {
       this.optsWidthLeftSide = this.leftOptions.offsetWidth;
     }
     this.optsDirty = false;
-
-    console.debug(this.optsWidthRightSide, this.optsWidthLeftSide);
   }
 
   private setOpenAmount(openAmount: number, isFinal: boolean): Promise<void> {
