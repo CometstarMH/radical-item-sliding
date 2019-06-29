@@ -24,7 +24,7 @@ Detailed API doc is still WIP.
 
 ## TODO
 
- - should I render the ignored ion-item-options?
- - code cleaning: refactor current logic as currently it is just calling all original drag handelers on click
- - unit test?
- - doc
+ - [ ] should I render the ignored ion-item-options?
+ - [x] code cleaning: refactor current logic as currently it is just calling all original drag handelers on click
+ - [ ] unit test?
+ - [ ] doc
