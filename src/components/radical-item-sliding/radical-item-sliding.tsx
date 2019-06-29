@@ -22,8 +22,6 @@ const enum SlidingState {
   SwipeStart = 1 << 6,
 }
 
-const later = (timeout?: number, ...args: any[]) => new Promise(resolve => window.setTimeout(resolve, timeout, ...args));
-
 /**
  * Wait for exactly 1 frame to complete redering, using requestAnimationFrame + Promise instead of double requestAnimationFrame.
  * The fulfilled handler (via .then(handler)) is added as microtask, or PromiseJobs, as defined in ECMAScript 2015.
@@ -54,7 +52,7 @@ function waitForRender() {
   styleUrl: 'radical-item-sliding.scss'
 })
 export class RadicalItemSliding {
-  private mode = document.documentElement.getAttribute('mode');
+  private mode = document.documentElement.getAttribute('mode') || ' ';
 
   private itemEl: any/*HTMLIonItemElement*/ | null = null;
   private leftOptions?: any/*HTMLIonItemOptionsElement*/;
@@ -223,9 +221,10 @@ export class RadicalItemSliding {
   private async updateOptions() {
     console.debug('updateOptions');
     const options = this.el.querySelectorAll('ion-item-options');
-    console.debug(options);
+    console.debug('updateOptions', options);
 
     let sides = 0;
+    let firstSide = 0;
 
     // Reset left and right options in case they were removed
     this.leftOptions = this.rightOptions = undefined;
@@ -236,15 +235,17 @@ export class RadicalItemSliding {
       if (option.side === 'start') {
         this.leftOptions = option;
         sides |= ItemSide.Start;
+        if (!firstSide) firstSide = ItemSide.Start;
       } else {
         this.rightOptions = option;
         sides |= ItemSide.End;
+        if (!firstSide) firstSide = ItemSide.End;
       }
     }
 
     console.debug(this.rightOptions);
     this.optsDirty = true;
-    this.sides = sides;
+    this.sides = firstSide;
   }
 
   /**
