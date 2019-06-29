@@ -10,7 +10,7 @@ The usage for this component remains largely the same as `ion-item-sliding`; you
 
 ## Project Status
 
-This project is still in a proof-of-concept stage. However, code cleanup and detailed testings aside, the component is stable enough and pretty usable as-is. It has also been deployed and actively used in a production environment at my previous workplace. 
+This project is in beta. However, code cleanup and detailed testings aside, the component is stable enough and pretty usable as-is. 
 
 If you find a bug, you are welcome to open a pull request. However, I would like to keep the scope of this project small. Feature request will be considered, but may not always be accepted.
 
@@ -20,7 +20,9 @@ Currently this project has not been publish to npm yet, so you need to follow St
 
 For example, if you are using Anuglar, you can follow <https://stenciljs.com/docs/angular>. 
 
-Detailed API doc is still WIP.
+## Known Limitations
+
+`ion-list` component `closeSlidingItems` method does not close its child `radical-item-sliding`. The method selects sliding items by tag name and of course does not aware of the new components. Monkey patching works, but it is dirty and hard to manage once dynamic component creation/removal are considered. Currently, you may want to wrap any calls to `closeSlidingItems` to also call `closeOpened` method in`radical-item-sliding` component.
 
 ## TODO
 

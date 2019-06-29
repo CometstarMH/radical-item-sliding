@@ -71,7 +71,7 @@ export class RadicalItemSliding {
   private click$ = new Subject<void>();
   private transitionendSub: Subscription;
 
-  @Element() el!: any/*HTMLIonItemSlidingElement*/;
+  @Element() el!: HTMLElement/*HTMLIonItemSlidingElement*/;
 
   @State() state: SlidingState = SlidingState.Disabled;
 
@@ -168,6 +168,7 @@ export class RadicalItemSliding {
         this.state = SlidingState.Disabled;
       }
     });
+
     await this.updateOptions();
   }
 
@@ -198,7 +199,7 @@ export class RadicalItemSliding {
   }
 
   /**
-   * Close the sliding item. Items can also be closed from the [List](../../list/List).
+   * Close the sliding item. Items can also be closed from the the parent `ion-list`.
    */
   @Method()
   async close() {
@@ -206,7 +207,7 @@ export class RadicalItemSliding {
   }
 
   /**
-   * Close all of the sliding items in the list. Items can also be closed from the [List](../../list/List).
+   * Close all of the sliding items in the list. Items can also be closed from the parent `ion-list`.
    */
   @Method()
   async closeOpened(): Promise<boolean> {
@@ -228,7 +229,7 @@ export class RadicalItemSliding {
     this.leftOptions = this.rightOptions = undefined;
 
     for (let i = 0; i < options.length; i++) {
-      const option = await options.item(i).componentOnReady();
+      const option = await (options.item(i) as any).componentOnReady();
 
       if (option.side === 'start') {
         this.leftOptions = option;

@@ -1,6 +1,6 @@
 {
   "name": "radical-item-sliding",
-  "version": "0.0.1",
+  "version": "0.9.0",
   "description": "Clone of ion-item-sliding, with sliding on click instead of drag",
   "module": "dist/index.mjs",
   "es2015": "dist/esm/index.mjs",
