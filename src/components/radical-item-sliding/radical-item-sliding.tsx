@@ -149,6 +149,11 @@ export class RadicalItemSliding {
 
     await this.setOpenAmount(restingPoint, true);
 
+    this.ionDrag.emit({
+      amount: restingPoint,
+      ratio: restingPoint > 0 ? restingPoint / this.optsWidthRightSide : restingPoint / this.optsWidthLeftSide
+    });
+
     // we only have click here, so there is no 'fully swiped' (swiped further than SWIPE_MARGIN), so no ionSwipe events
     /*
     if ((this.state & SlidingState.SwipeEnd) !== 0 && this.rightOptions) {
@@ -289,11 +294,6 @@ export class RadicalItemSliding {
         ? SlidingState.Start | SlidingState.SwipeStart
         : SlidingState.Start;
     } else {
-      // emit ionDrag here, because we no longer need a drag to close the slide
-      this.ionDrag.emit({
-        amount: 0,
-        ratio: 0
-      });
       // state is reset in transitionend event instead of using a timer
       // state must be set after animation so host element class is updated to hide the item options only after animation 
       style.transform = '';
@@ -302,10 +302,12 @@ export class RadicalItemSliding {
 
     console.debug('set transform');
     style.transform = `translate3d(${-openAmount}px,0,0)`;
+    /*
     this.ionDrag.emit({
       amount: openAmount,
       ratio: this.getSlidingRatioSync()
     });
+    */
     return waitForRender();
   }
 
