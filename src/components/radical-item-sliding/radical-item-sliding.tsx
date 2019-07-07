@@ -289,6 +289,11 @@ export class RadicalItemSliding {
         ? SlidingState.Start | SlidingState.SwipeStart
         : SlidingState.Start;
     } else {
+      // emit ionDrag here, because we no longer need a drag to close the slide
+      this.ionDrag.emit({
+        amount: 0,
+        ratio: 0
+      });
       // state is reset in transitionend event instead of using a timer
       // state must be set after animation so host element class is updated to hide the item options only after animation 
       style.transform = '';
